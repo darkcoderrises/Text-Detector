@@ -1,0 +1,5 @@
+*.o
+*.jpg
+.idea/
+main
+mser/
