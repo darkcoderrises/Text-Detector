@@ -7,14 +7,17 @@
 
 #include "region.h"
 #include <vector>
+#include <set>
 
 using namespace std;
 
 class ER {
 public:
     vector<int> levels_;
-    Region* find(vector<int> pixels, int width, int height);
+    vector<Region *> find(vector<int> pixels, int width, int height);
     ER(vector<int> levels, double minArea_=0.001, double maxArea_=0.5);
+    bool check_level(int x, int y);
+    void dfs(int pixel, Region* region);
 
 private:
     double minArea_, maxArea_;
