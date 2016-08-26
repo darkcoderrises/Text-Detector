@@ -25,7 +25,7 @@ int main() {
     }
     vector<Region *> result = er.find(points, size, size);
     for(int i=0;i<result.size();i++) {
-        result[i]->print();
+        //result[i]->print();
     }
     return 0;
 }
