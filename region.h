@@ -24,16 +24,17 @@ public:
         this->parent_ = k;
     }
 
-    bool checkOverlap(int parent_level);
+    Region* checkOverlap();
     int findNumberOfOverlap(vector<int> levels);
     void addRegionUnder(Region* region);
     void addPixel(int x, int y);
     void print();
     void setChildParent();
+    double getStability();
 
 private:
     int max_x_=0, min_x_ = 1000000, max_y_=0, min_y_ = 100000;
-    Region* parent_;
+    Region* parent_ = nullptr;
     vector<Region *> children_;
 };
 

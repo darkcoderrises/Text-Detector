@@ -147,3 +147,22 @@ vector<Region*> ER::find(vector<int> pixels, int width, int height) {
 
     return er_result;
 }
+
+vector<Region *> ER::non_maximum_suppression(vector<Region *> er) {
+    bool *visited = new bool[er.size()];
+    vector<Region *> result;
+
+    for (int i=0; i<er.size(); i++) {
+        Region* now = er[i];
+        Region* max_ov = now->checkOverlap();
+
+        if (max_ov) {
+            if (!visited[max_ov->color_]) {
+                result.push_back(max_ov);
+                visited[max_ov->color_] = true;
+            }
+        }
+    }
+
+    return result;
+}
