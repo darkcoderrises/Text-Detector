@@ -1,5 +1,5 @@
 C = g++
-CFLAGS = -O3 -g
+CFLAGS = -std=c++11 -O3 -g
 PROG = main
 
 SRCS = main.cpp

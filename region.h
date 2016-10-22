@@ -12,16 +12,27 @@ using namespace std;
 
 class Region {
 public:
-    int level_, color_;
+    int level_, color_, area_;
     set<int> colors_under_;
     Region(int level_=0, int color_=-1);
 
+    Region* getParent() {
+        return parent_;
+    }
+
+    void setParent(Region* k) {
+        this->parent_ = k;
+    }
+
     bool checkOverlap(int parent_level);
     int findNumberOfOverlap(vector<int> levels);
-    void addColorUnder(int color);
+    void addRegionUnder(Region* region);
+    void addPixel(int x, int y);
     void print();
+    void setChildParent();
 
 private:
+    int max_x_=0, min_x_ = 1000000, max_y_=0, min_y_ = 100000;
     Region* parent_;
     vector<Region *> children_;
 };

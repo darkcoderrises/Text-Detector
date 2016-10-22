@@ -22,6 +22,7 @@ int *color_, working_on_level_; //For dfs
 int color_level_[maxN], current_color_; // For counting
 bool *visited;
 vector<int> pixels_;
+vector<Region *> er_result;
 
 int get_x(int pixel) {
     if (width_>0) return pixel%width_;
@@ -49,6 +50,7 @@ int get_color(int color_level) {
 
 void ER::dfs(int pixel, Region* region) {
     int x = get_x(pixel), y=get_y(pixel);
+    region->addPixel(x, y);
     visited[pixel] = true;
 
     for (int i=0; i<4; i++) {
@@ -62,7 +64,7 @@ void ER::dfs(int pixel, Region* region) {
             dfs(pixel1, region);
         }
         else if (get_color(color_[pixel1]) != get_color(color_[pixel])){
-            region->addColorUnder(get_color(color_[pixel1]));
+            region->addRegionUnder(er_result[get_color(color_[pixel1])]);
             color_level_[color_[pixel1]] = color_level_[color_[pixel]];
             dfs(pixel1, region);
         }
@@ -98,7 +100,7 @@ vector<Region*> ER::find(vector<int> pixels, int width, int height) {
     width_ = width;
     height_ = height;
     pixels_ = pixels;
-    vector<Region*> er_result;
+    er_result.clear();
 
     // COUNT SORTING
     // sorted_pixel[i] would contain the pixels with intensity less than level[i]
@@ -106,19 +108,14 @@ vector<Region*> ER::find(vector<int> pixels, int width, int height) {
     for(int i=0; i<pixels.size(); i++)
         for (int j=0; j<levels_.size(); j++)
             if (pixels[i] <= levels_[j])
-                if (j>0 && pixels[i] >= levels_[j-1])
+                //if ((j==0) || (j>0 && pixels[i] >= levels_[j-1]))
                     sorted_pixels[j].push_back(i);
-
-    for (int i=0; i<levels_.size(); i++) {
-        cout << "LEVEL: " << i << endl;
-        //print_vector(sorted_pixels[i]);
-    }
 
     color_ = new int[width_ * height_];
     for (int i=0; i<width; i++)
         for (int j=0; j<height; j++)
             color_[get_pixel(i,j)] = -1;
-    cout <<"----INIT----\n";
+    //cout <<"----INIT----\n";
     //printMatrix();
 
     current_color_ = -1;
@@ -126,7 +123,7 @@ vector<Region*> ER::find(vector<int> pixels, int width, int height) {
         visited = new bool[width_ * height_];
         for (int i = 0; i < sorted_pixels[working_on_level_].size(); i++) {
             int pixel = sorted_pixels[working_on_level_][i];
-            if (color_[pixel] == -1) {
+            if (visited[pixel] == 0) {
                 //cout << "Current color " << current_color_ <<endl;
                 current_color_ += 1;
                 color_level_[current_color_] = current_color_;
@@ -135,13 +132,14 @@ vector<Region*> ER::find(vector<int> pixels, int width, int height) {
                 //region->addColorUnder(current_color_);
 
                 dfs(pixel, region);
+                region->setChildParent();
                 er_result.push_back(region);
 
                 //print_color();
             }
         }
 
-        //cout << "---- LEVEL -----\n";
+        cout << "---- LEVEL -----\n";
         //printMatrix();
     }
 
