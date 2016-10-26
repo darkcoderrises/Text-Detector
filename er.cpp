@@ -15,7 +15,7 @@ ER::ER(vector<int> levels, double minArea_, double maxArea_) {
     this->maxArea_ = maxArea_;
 }
 
-const int maxN = 1123456;
+const int maxN = 51234567;
 int directions_[][2] = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
 int width_, height_;
 int *color_, working_on_level_; //For dfs

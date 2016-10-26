@@ -31,9 +31,9 @@ public:
     void print();
     void setChildParent();
     double getStability();
+    int max_x_=0, min_x_ = 1000000, max_y_=0, min_y_ = 100000;
 
 private:
-    int max_x_=0, min_x_ = 1000000, max_y_=0, min_y_ = 100000;
     Region* parent_ = nullptr;
     vector<Region *> children_;
 };

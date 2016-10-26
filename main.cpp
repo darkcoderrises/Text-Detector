@@ -8,8 +8,11 @@
 #include <stdlib.h>
 #include <time.h>
 #include <iostream>
+#include <opencv2/core/core.hpp>
+#include <opencv2/highgui/highgui.hpp>
 
 using namespace std;
+using namespace cv;
 
 int main() {
     int arr[6] = {40, 80, 120, 160, 200, 255};
@@ -17,30 +20,46 @@ int main() {
     for (int i=0; i<6; i++) levels.push_back(arr[i]);
 
     ER er(levels);
-    srand (time(NULL));
+    Mat image = imread("a.jpg", CV_LOAD_IMAGE_GRAYSCALE);
+    Mat im1 = imread("a.jpg", CV_LOAD_IMAGE_COLOR);
+    im1.convertTo(im1, CV_8U);
+    image.convertTo(image, CV_8U);
     vector<int> points;
 
-    int size =1000;
-    for (int i=0;i<size*size;i++) {
-        points.push_back(rand()%255+1);
+    for (int i=0;i<image.rows;i++) {
+        uchar* ptr = image.ptr<uchar>(i);
+        for (int j=0; j<image.cols;j++) {
+            points.push_back((int)(ptr[j]));
+        }
     }
 
     /*for (int i=0; i<size; i++) {
-        for (int j=0; j<size; j++) {
-            cerr << points[i + j * size] << " ";
-        }
-        cerr << endl;
-    }*/
+              for (int j=0; j<size; j++) {
+                          cerr << points[i + j * size] << " ";
+                                  }
+                                          cerr << endl;
+                                              }*/
 
-    vector<Region *> result = er.find(points, size, size);
+
+    vector<Region *> result = er.find(points, image.cols, image.rows);
     for(int i=0;i<result.size();i++) {
         //result[i]->print();
     }
-    vector<Region *> suppressed = er.non_maximum_suppression(result);
+    vector<Region *> suppressed = result ;// er.non_maximum_suppression(result);
     cout << " Printing suppressed\n";
     for (int i=0;i<suppressed.size();i++) {
+        Point p1,p2;
+        p1.x = suppressed[i]->min_x_;
+        p1.y = suppressed[i]->min_y_;
+        p2.x = suppressed[i]->max_x_;
+        p2.y = suppressed[i]->max_y_;
+
+        rectangle(im1, p1, p2, CV_RGB(0,255,0),1);
         //cout << suppressed[i]->color_ <<" ";
     }
     cout << endl;
+    imshow("Image", image);
+    imshow("Im1", im1);
+    waitKey(0);
     return 0;
 }
