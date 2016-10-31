@@ -15,9 +15,9 @@ using namespace std;
 using namespace cv;
 
 int main() {
-    int arr[6] = {40, 80, 120, 160, 200, 255};
+    //int arr[6] = {40, 80, 120, 160, 200, 255};
     vector<int> levels;
-    for (int i=0; i<6; i++) levels.push_back(arr[i]);
+    for (int i=1; i<256; i++) levels.push_back(i);
 
     ER er(levels);
     Mat image = imread("a.jpg", CV_LOAD_IMAGE_GRAYSCALE);
@@ -33,19 +33,11 @@ int main() {
         }
     }
 
-    /*for (int i=0; i<size; i++) {
-              for (int j=0; j<size; j++) {
-                          cerr << points[i + j * size] << " ";
-                                  }
-                                          cerr << endl;
-                                              }*/
-
-
     vector<Region *> result = er.find(points, image.cols, image.rows);
     for(int i=0;i<result.size();i++) {
         //result[i]->print();
     }
-    vector<Region *> suppressed = result ;// er.non_maximum_suppression(result);
+    vector<Region *> suppressed = er.non_maximum_suppression(result);
     cout << " Printing suppressed\n";
     for (int i=0;i<suppressed.size();i++) {
         Point p1,p2;
@@ -55,10 +47,9 @@ int main() {
         p2.y = suppressed[i]->max_y_;
 
         rectangle(im1, p1, p2, CV_RGB(0,255,0),1);
-        //cout << suppressed[i]->color_ <<" ";
+        //cout << p1.x << " " << p1.y << " " << p2.x-p1.x << " " << p2.y-p1.y << endl;
     }
-    cout << endl;
-    imshow("Image", image);
+    cout << suppressed.size() << endl;
     imshow("Im1", im1);
     waitKey(0);
     return 0;

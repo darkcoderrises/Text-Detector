@@ -19,6 +19,7 @@ public:
     bool check_level(int x, int y);
     void dfs(int pixel, Region* region);
     vector<Region *> non_maximum_suppression(vector<Region*> er);
+    vector<Region *> clean_er_tree(vector<Region*> er);
 
 private:
     double minArea_, maxArea_;

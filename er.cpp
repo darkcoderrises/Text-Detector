@@ -16,7 +16,7 @@ ER::ER(vector<int> levels, double minArea_, double maxArea_) {
 }
 
 const int maxN = 51234567;
-int directions_[][2] = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
+int directions_[][2] = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}, {-1, 1}, {-1, -1}, {1, -1}, {1, 1}};
 int width_, height_;
 int *color_, working_on_level_; //For dfs
 int color_level_[maxN], current_color_; // For counting
@@ -44,32 +44,10 @@ bool ER::check_level(int x, int y) {
 }
 
 int get_color(int color_level) {
+    if (color_level == -1) return -1;
     if (color_level_[color_level] == color_level) return color_level;
-    return (color_level_[color_level] = get_color(color_level_[color_level])) & color_level_[color_level];
-}
-
-void ER::dfs(int pixel, Region* region) {
-    int x = get_x(pixel), y=get_y(pixel);
-    region->addPixel(x, y);
-    visited[pixel] = true;
-
-    for (int i=0; i<4; i++) {
-        int x1 = x+directions_[i][0], y1 = y+directions_[i][1];
-        int pixel1 = get_pixel(x1, y1);
-
-        if (!(x1 < width_ && x1 >=0 && y1 < height_ && y1 >= 0 && this->check_level(x1, y1) && !visited[pixel1])) continue;
-
-        if (color_[pixel1] == -1) {
-            color_[pixel1] = get_color(color_[pixel]);
-            dfs(pixel1, region);
-        }
-        else if (get_color(color_[pixel1]) != get_color(color_[pixel])){
-            region->addRegionUnder(er_result[get_color(color_[pixel1])]);
-            color_level_[color_[pixel1]] = color_level_[color_[pixel]];
-            dfs(pixel1, region);
-        }
-
-    }
+    color_level_[color_level] = get_color(color_level_[color_level]);
+    return color_level_[color_level];
 }
 
 void print_color() {
@@ -108,7 +86,7 @@ vector<Region*> ER::find(vector<int> pixels, int width, int height) {
     for(int i=0; i<pixels.size(); i++)
         for (int j=0; j<levels_.size(); j++)
             if (pixels[i] <= levels_[j])
-                //if ((j==0) || (j>0 && pixels[i] >= levels_[j-1]))
+                if ((j==0) || (j>0 && pixels[i] >= levels_[j-1]))
                     sorted_pixels[j].push_back(i);
 
     color_ = new int[width_ * height_];
@@ -120,41 +98,67 @@ vector<Region*> ER::find(vector<int> pixels, int width, int height) {
 
     current_color_ = -1;
     for (working_on_level_=0; working_on_level_<levels_.size(); working_on_level_++) {
-        visited = new bool[width_ * height_];
-        for (int i = 0; i < sorted_pixels[working_on_level_].size(); i++) {
+        int level_color = current_color_;
+        for (int i=0; i<sorted_pixels[working_on_level_].size(); i++) {
             int pixel = sorted_pixels[working_on_level_][i];
-            if (visited[pixel] == 0) {
-                //cout << "Current color " << current_color_ <<endl;
-                current_color_ += 1;
-                color_level_[current_color_] = current_color_;
-                color_[pixel] = current_color_;
+            int x=get_x(pixel), y=get_y(pixel);
+            int max_color = -1;
+
+            for (int dir=0; dir<8; dir++) {
+                int X = x + directions_[dir][0], Y = y + directions_[dir][1];
+                if (X<0 || X>=width_ || Y<0 || Y>=height_) continue;
+                max_color = max(get_color(color_[get_pixel(X,Y)]), max_color);
+            }
+
+            if (max_color <= level_color || max_color == -1) {
+                current_color_++;
                 Region *region = new Region(levels_[working_on_level_], current_color_);
-                //region->addColorUnder(current_color_);
+                region->addPixel(x,y);
+                color_[get_pixel(x,y)] = current_color_;
+                color_level_[current_color_] = current_color_;
 
-                dfs(pixel, region);
-                region->setChildParent();
+                for (int dir=0; dir<8; dir++) {
+                    int X = x + directions_[dir][0], Y = y + directions_[dir][1];
+                    if (X<0 || X>=width_ || Y<0 || Y>=height_) continue;
+
+                    if (color_[get_pixel(X,Y)] == -1) continue;
+                    if (current_color_ != get_color(color_[get_pixel(X,Y)])) {
+                        region->addRegionUnder(er_result[get_color(color_[get_pixel(X, Y)])]);
+                        color_level_[get_color(color_[get_pixel(X, Y)])] = current_color_;
+                    }
+                }
+
                 er_result.push_back(region);
+                continue;
+            }
 
-                //print_color();
+            er_result[max_color]->addPixel(x,y);
+            color_[get_pixel(x,y)] = max_color;
+            for (int dir =0; dir<8; dir++) {
+                int X = x + directions_[dir][0], Y = y + directions_[dir][1];
+                if (X<0 || X>=width_ || Y<0 || Y>=height_) continue;
+
+                if (get_color(color_[get_pixel(X,Y)]) > level_color) {
+                    er_result[max_color]->merge(er_result[get_color(color_[get_pixel(X,Y)])]);
+                    color_level_[get_color(color_[get_pixel(X,Y)])] = max_color;
+                }
+                else if (get_color(color_[get_pixel(X,Y)]) != -1) {
+                    er_result[max_color]->addRegionUnder(er_result[get_color(color_[get_pixel(X,Y)])]);
+                }
             }
         }
-
-        cout << "---- LEVEL -----\n";
-        //printMatrix();
     }
-
-    //print_color();
 
     return er_result;
 }
 
 vector<Region *> ER::non_maximum_suppression(vector<Region *> er) {
     bool *visited = new bool[er.size()];
-    vector<Region *> result;
+    vector < Region * > result;
 
-    for (int i=0; i<er.size(); i++) {
-        Region* now = er[i];
-        Region* max_ov = now->checkOverlap();
+    for (int i = 0; i < er.size(); i++) {
+        Region *now = er[i];
+        Region *max_ov = now->checkOverlap();
 
         if (max_ov) {
             if (!visited[max_ov->color_]) {
@@ -162,6 +166,17 @@ vector<Region *> ER::non_maximum_suppression(vector<Region *> er) {
                 visited[max_ov->color_] = true;
             }
         }
+    }
+
+    return this->clean_er_tree(result);
+}
+
+vector<Region *> ER::clean_er_tree(vector<Region *> er) {
+    vector<Region *> result;
+    for (int i=0; i<er.size(); i++) {
+        Region *now = er[i];
+        if (now->getAspectRatio() > 5) continue;
+        result.push_back(now);
     }
 
     return result;

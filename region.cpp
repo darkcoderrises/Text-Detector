@@ -18,12 +18,25 @@ void Region::setChildParent() {
     }
 }
 
+void Region::merge(Region *h) {
+    max_x_ = max(h->max_x_, max_x_);
+    max_y_ = max(h->max_y_, max_y_);
+    min_x_ = min(h->min_x_, min_x_);
+    min_y_ = min(h->min_y_, min_y_);
+
+    this->area_ = (this->max_y_ - this->min_y_ + 1)*(this->max_x_ - this->min_x_ +1 );
+}
+
+double Region::getAspectRatio() {
+    return (max_x_ - min_x_+1) / (max_y_ - min_y_+1);
+}
+
 Region* Region::checkOverlap() {
     int number_of_overlap = 0;
     Region* parent = this->parent_;
     Region* max_element = this;
 
-    while (parent && this->area_ < 0.7*parent->area_) {
+    while (parent && this->area_ >= 0.7*parent->area_) {
         number_of_overlap ++;
         if (max_element->getStability() < parent->getStability()) {
             max_element = parent;
@@ -40,8 +53,11 @@ int Region::findNumberOfOverlap(vector<int> levels) {
 }
 
 void Region::addRegionUnder(Region *region) {
-    this->colors_under_.insert(region->color_);
-    this->children_.push_back(region);
+    pair<set<int>::iterator, bool> a = this->colors_under_.insert(region->color_);
+    if (a.second) this->children_.push_back(region);
+    region->setParent(this);
+
+    this->merge(region);
 }
 
 void Region::addPixel(int x, int y) {
