@@ -1,5 +1,12 @@
+*.swp
 *.o
 *.jpg
+*.png
 .idea/
+train
+*_x
+*_y
 main
 mser/
+Result/
+database/

@@ -176,6 +176,7 @@ vector<Region *> ER::clean_er_tree(vector<Region *> er) {
     for (int i=0; i<er.size(); i++) {
         Region *now = er[i];
         if (now->getAspectRatio() > 5) continue;
+        if (now->area_ < 0.0005*width_*height_) continue;
         result.push_back(now);
     }
 

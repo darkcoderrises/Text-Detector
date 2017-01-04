@@ -35,8 +35,7 @@ Region* Region::checkOverlap() {
     int number_of_overlap = 0;
     Region* parent = this->parent_;
     Region* max_element = this;
-
-    while (parent && this->area_ >= 0.7*parent->area_) {
+    while (parent && (this->area_ > 0.7* parent->area_)) {
         number_of_overlap ++;
         if (max_element->getStability() < parent->getStability()) {
             max_element = parent;
@@ -44,7 +43,7 @@ Region* Region::checkOverlap() {
         parent = parent->parent_;
     }
 
-    if (number_of_overlap>=3) return max_element;
+    if (number_of_overlap>=3) return this;
     return nullptr;
 }
 
@@ -83,9 +82,8 @@ void Region::print() {
 double Region::getStability() {
     int t = 2;
     Region* parent = this;
-    while (t--) {
+    while (parent->parent_ != nullptr && (parent->level_ - this->level_) < t) {
         parent = parent->parent_;
-        if (parent == nullptr) return 0;
     }
 
     double parent_area = (double) parent->area_;
