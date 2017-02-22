@@ -67,7 +67,11 @@ void print_vector(vector<int> a) {
 void printMatrix() {
     for (int i=0; i<width_; i++) {
         for (int j=0; j<height_; j++) {
-            cout << color_[j*width_ + i] << " ";
+        	if (color_[j*width_+i] == -1) {
+            	cout << "*" << " ";
+        	} else {
+        		cout << get_color(color_[j*width_+i]) << " ";
+        	}
         }
         cout << endl;
     }
@@ -110,7 +114,7 @@ vector<Region*> ER::find(vector<int> pixels, int width, int height) {
                 max_color = max(get_color(color_[get_pixel(X,Y)]), max_color);
             }
 
-            if (max_color <= level_color || max_color == -1) {
+            if (max_color <= level_color  || max_color == -1) {
                 current_color_++;
                 Region *region = new Region(levels_[working_on_level_], current_color_);
                 region->addPixel(x,y);
@@ -147,9 +151,33 @@ vector<Region*> ER::find(vector<int> pixels, int width, int height) {
                 }
             }
         }
+
+        // cout << "======================================\n";
+        // printMatrix();
+        // cout << "======================================\n";
     }
 
     return er_result;
+}
+
+Region* checkOverlap(Region* er, bool* visited) {
+    int number_of_overlap = 0;
+    visited[er->color_] = true;
+    Region* parent = er->parent_;
+    Region* max_element = er;
+    
+    while (parent && (er->area_ > 0.3* parent->area_)) {
+    	visited[parent->color_] = true;
+        number_of_overlap ++;
+        if (max_element->getStability() < parent->getStability()) {
+            max_element = parent;
+        }
+        parent = parent->parent_;
+        if (parent) visited[parent->color_] = true;
+    }
+
+    if (number_of_overlap>=3) return max_element;
+    return nullptr;
 }
 
 vector<Region *> ER::non_maximum_suppression(vector<Region *> er) {
@@ -157,14 +185,14 @@ vector<Region *> ER::non_maximum_suppression(vector<Region *> er) {
     vector < Region * > result;
 
     for (int i = 0; i < er.size(); i++) {
+    	if (visited[er[i]->color_]) 
+    		continue;
         Region *now = er[i];
-        Region *max_ov = now->checkOverlap();
+        Region *max_ov = checkOverlap(now, visited);
 
         if (max_ov) {
-            if (!visited[max_ov->color_]) {
-                result.push_back(max_ov);
-                visited[max_ov->color_] = true;
-            }
+            result.push_back(max_ov);
+            visited[max_ov->color_] = true;
         }
     }
 
@@ -176,7 +204,7 @@ vector<Region *> ER::clean_er_tree(vector<Region *> er) {
     for (int i=0; i<er.size(); i++) {
         Region *now = er[i];
         if (now->getAspectRatio() > 5) continue;
-        if (now->area_ < 0.0005*width_*height_) continue;
+        if (now->area_ < 0.0005*width_*height_ || now->area_ > 0.1*width_*height_) continue;
         result.push_back(now);
     }
 

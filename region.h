@@ -34,9 +34,9 @@ public:
     double getAspectRatio();
     int max_x_=0, min_x_ = 1000000, max_y_=0, min_y_ = 100000;
     void merge(Region* h);
+    Region* parent_ = nullptr;
 
 private:
-    Region* parent_ = nullptr;
     vector<Region *> children_;
 };
 

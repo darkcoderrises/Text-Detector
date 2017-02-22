@@ -7,12 +7,32 @@
 #include <utility>
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
 
 typedef std::tuple<int, int, int, int> boundary;
 
 using namespace std;
 using namespace cv;
 
+#define error(args...) { vector<string> _v = split(#args, ','); err(_v.begin(), args); }
+
+vector<string> split(const string& s, char c) {
+	vector<string> v;
+	stringstream ss(s);
+	string x;
+	while (getline(ss, x, c))
+		v.emplace_back(x);
+	return move(v);
+}
+
+void err(vector<string>::iterator it) { cerr << '\n';}
+template<typename T, typename... Args>
+void err(vector<string>::iterator it, T a, Args... args) {
+	cerr << it -> substr((*it)[0] == ' ', it -> length()) << " = " << a << ' ';
+	err(++it, args...);
+}
+
+int histValue=22*22;
 int directions_[][2] = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}, {-1, 1}, {-1, -1}, {1, -1}, {1, 1}};
 int direction[][2] = {{-1,-1}, {-1,0}, {-1,1}, {0,1}, {1,1}, {1,0}, {1,-1}, {0,-1}};
 int width, height, maxX, maxY, minX, minY; 
@@ -81,35 +101,30 @@ boundary makeBoundary() {
 	return boundary(min(x1, x2), max(x1, x2), min(y1, y2), max(y1, y2));
 }
 
-double* calcHistogram(Point p1, Point p2, Mat image) {
-    double* histogram = new double[1<<8];
 
-    for (int i=0; i<(1<<8); i++) 
-    	histogram[i] = 0;
+double* calcHistogram(Point p1, Point p2, Mat image) {
+	Mat im1 = image(Rect(p1.x, p1.y, p2.x-p1.x, p2.y-p1.y)), resized;
+	resize(im1, resized, cvSize(24,24));
+    double* histogram = new double[histValue];
 
     int number_of_items = 0;
-    for (int i=(p1.x+1); i<=(p2.x-1); i++) {
-        for (int j=(p1.y+1); j<=(p2.y-1); j++) {
-        	number_of_items += 1;
+    for (int i=1; i<=22; i++) {
+        for (int j=1; j<=22; j++) {
             double sum=0;
             for (int direc=0; direc<8; direc++) {
                 int x = i+direction[direc][1], y = j+direction[direc][0];
-                sum += (double) image.at<uchar>(y,x);
+                sum += (double) resized.at<uchar>(y,x);
             }
             sum /= 8;
             unsigned char code = 0;
             for (int direc=0; direc<8; direc++) {
                 int x = i+direction[direc][1], y = j+direction[direc][0];
-                code |= (((double) image.at<uchar>(y,x)) < sum) << (7-direc);
+                code |= (((double) resized.at<uchar>(y,x)) > sum) << (7-direc);
             }
 
-            histogram[(int) code] += (double)1;
+            histogram[(i-1)*22+j-1] = code;
         }
     }
-
-    for (int i=0; i<(1<<8); i++)
-    	if (number_of_items != 0)
-    		histogram[i] = ((double) histogram[i]) / ((double) number_of_items);
 
     return histogram;
 }
@@ -121,7 +136,7 @@ double* calcHistogram(boundary b, Mat image) {
 }
 
 void printMat(double* hist, bool truth) {
-	for (int t=0; t<(1<<8); t++) {
+	for (int t=0; t<(histValue); t++) {
     	train_x << hist[t] << " ";
     }
     train_x << endl;
@@ -153,6 +168,7 @@ void trainFile(string fileName, string gtName) {
 			if (visited[get_pixel(i,j)]==false && image[get_pixel(i,j)]==true) {
 				maxX = 0; maxY = 0; minX = max(height, width); minY = minX;
 				dfs(i,j);
+				if ((maxX-minX)<2 || (maxY-minY)<2) continue;
 				textArea.push_back(boundary(minX, maxX, minY, maxY));
 			}
 		}
