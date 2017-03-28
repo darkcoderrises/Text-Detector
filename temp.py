@@ -18,7 +18,8 @@ X_pca = pca.transform(X_train)
 
 target_names = ["Text", "NonText"]
 plt.figure()
-for color, i, target_name in zip(['red', 'green'], [-1,1], target_names):
+
+for color, i, target_name in zip(['green', 'red'], [1,-1], target_names):
     plt.scatter(X_pca[train_y==i, 0], X_pca[train_y==i, 1], color=color, alpha=0.8, lw=2, label=target_name)
 plt.show()
 

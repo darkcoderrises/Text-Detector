@@ -103,30 +103,43 @@ boundary makeBoundary() {
 
 
 double* calcHistogram(Point p1, Point p2, Mat image) {
-	Mat im1 = image(Rect(p1.x, p1.y, p2.x-p1.x, p2.y-p1.y)), resized;
+	Mat im1 = image(Rect(max(p1.x,0), max(p1.y,0), p2.x-p1.x, p2.y-p1.y)), resized;
 	resize(im1, resized, cvSize(24,24));
-    double* histogram = new double[histValue];
+        
+    char filename[128];
+    // if (getIntersection(p1, p2) > 0.7) {
+    //     sprintf(filename, "images/i1/%s_%04d.jpg", globalName.c_str(), countIm);
+    // 	imwrite(filename, im1);
+    // }
+    // else if (getIntersection(p1, p2) <= 0) {
+    //     sprintf(filename, "images/i2/%s_%04d.jpg", globalName.c_str(), countIm);
+    // 	imwrite(filename, im1);
+    // }
 
-    int number_of_items = 0;
-    for (int i=1; i<=22; i++) {
-        for (int j=1; j<=22; j++) {
-            double sum=0;
-            for (int direc=0; direc<8; direc++) {
-                int x = i+direction[direc][1], y = j+direction[direc][0];
-                sum += (double) resized.at<uchar>(y,x);
-            }
-            sum /= 8;
-            unsigned char code = 0;
-            for (int direc=0; direc<8; direc++) {
-                int x = i+direction[direc][1], y = j+direction[direc][0];
-                code |= (((double) resized.at<uchar>(y,x)) > sum) << (7-direc);
-            }
+	double* histogram = new double[histValue];
+	double mean = 0, var = 0;
 
-            histogram[(i-1)*22+j-1] = code;
-        }
-    }
+	int number_of_items = 0;
+	for (int i=1; i<=22; i++) {
+		for (int j=1; j<=22; j++) {
+			double sum=0;
+			for (int direc=0; direc<8; direc++) {
+				int x = i+direction[direc][1], y = j+direction[direc][0];
+				sum += (double) resized.at<uchar>(y,x);
+			}
+			sum /= 8;
+			unsigned char code = 0;
+			for (int direc=0; direc<8; direc++) {
+				int x = i+direction[direc][1], y = j+direction[direc][0];
+				code |= (((double) resized.at<uchar>(y,x)) > sum) << (7-direc);
+			}
 
-    return histogram;
+			histogram[(i-1)*22+j-1] = code;
+			mean += code / histValue;
+		}
+	}
+
+	return histogram;
 }
 
 double* calcHistogram(boundary b, Mat image) {

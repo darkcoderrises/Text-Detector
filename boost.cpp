@@ -36,10 +36,10 @@ Mat read_mat_from_file(string filename, int rows,int cols) {
     return out;
 }
 
-bool train = false;
+bool train = true;
 
 int main(int argc, char *argv[]) {
-	String train_file_x = "train_x", train_file_y = "train_y", result_file_x = "Result_total/result_x", result_file_y = "Result_total/result_y";
+	String train_file_x = "train_x", train_file_y = "train_y", result_file_x = "Result/result_x", result_file_y = "Result/result_y";
 	Mat train_x, train_y, result_x, result_y;
 
 	train_x = read_mat_from_file(train_file_x, line_count(train_file_x), 22*22);
@@ -52,22 +52,15 @@ int main(int argc, char *argv[]) {
 	
 	if (train) {
 		boost.train(train_x, CV_ROW_SAMPLE, train_y, Mat(), Mat(), Mat(), Mat(), param, false);
-		boost.save("./data.xml", "boost");
+		boost.save("./data1.xml", "boost");
 		cout << "Training complete\n";
 	} 
-	boost.load("./data.xml");
-        float minN=1000, maxN = -1000;
+	boost.load("./data1.xml");
 	
 	int total = result_y.size[0], correct = 0;
 	for (int i=0; i<total; i++) {
-            float result = boost.predict(result_x.row(i), Mat(), CV_WHOLE_SEQ, false, true);
-            cout << "i: " << result<< " " << boost.predict(result_x.row(i)) << endl;
-            minN = min(minN, result);
-            maxN = max(maxN, result);
-
-	    result = boost.predict(result_x.row(i));
-            correct += (result_y.at<float>(i,0) == result);
+		float result = boost.predict(result_x.row(i));
+		correct += (result_y.at<float>(i,0) == result);
 	}
-        cout << minN << " " << maxN << endl;
 	cout << ((float) correct) / ((float) total) << endl;
 }
