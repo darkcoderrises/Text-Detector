@@ -2,7 +2,6 @@ import matplotlib.pyplot as plt
 from math import floor
 import numpy as np
 
-
 def ones(m):
     l = []
     for i in m:

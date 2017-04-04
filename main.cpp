@@ -141,7 +141,7 @@ double* calcHistogram(Point p1, Point p2, Mat image) {
         
     countIm++;
     char filename[128];
-    if (getIntersection(p1, p2) > 0.7) {
+/*    if (getIntersection(p1, p2) > 0.7) {
         sprintf(filename, "images/CLASS1/%s_%02d.jpg", globalName.c_str(), countIm);
     	imwrite(filename, im1);
     }
@@ -152,7 +152,7 @@ double* calcHistogram(Point p1, Point p2, Mat image) {
     else {
         sprintf(filename, "images/CLASS3/%s_%02d.jpg", globalName.c_str(), countIm);
     	imwrite(filename, im1);
-    }
+    }*/
 
 	double* histogram = new double[histValue];
 	double mean = 0, var = 0;
@@ -256,21 +256,21 @@ void runOnImage(String name) {
 
 
 		//boost.predict(out) == 1 checkGroundTruth(p1, p2) getIntersection(p1, p2)
-		if (getIntersection(p1, p2)>=0.7) { 
-			//rectangle(im1, p1, p2, CV_RGB(0,255,0),1);
-			//rectangle(imTemp, p1, p2, CV_RGB(0,255,0),1);
+		if (boost.predict(out)==1) { 
+			rectangle(im1, p1, p2, CV_RGB(0,255,0),1);
+			rectangle(imTemp, p1, p2, CV_RGB(0,255,0),1);
 //			result_y << 1 << endl;
 		}
 		else {
-			//rectangle(imTemp, p1, p2, CV_RGB(255,0,0),1);
+			rectangle(imTemp, p1, p2, CV_RGB(255,0,0),1);
 //			result_y << -1 << endl;
 		}
 	}
 
 	//cout << (float) precision / suppressed.size() << " " << precision << " " << suppressed.size() << endl;
-	//imshow("im1", im1);
-        //imshow("imTemp", imTemp);
-	//waitKey(0);
+        imshow("imTemp", imTemp);
+	imshow("im1", im1);
+	waitKey(0);
 }
 
 int main(int argc, char *argv[]) {

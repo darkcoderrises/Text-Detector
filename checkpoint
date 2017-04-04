@@ -1,0 +1,2 @@
+model_checkpoint_path: "tensor-flow-nn.ckpt"
+all_model_checkpoint_paths: "tensor-flow-nn.ckpt"
