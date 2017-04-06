@@ -47,7 +47,7 @@ Tensorflow code
 import tensorflow as tf
 
 learning_rate = 0.0001
-training_epoch = 30
+training_epoch = 100
 batch_size = 10
 
 n_hidden_1 = 72
@@ -107,17 +107,15 @@ with tf.Session() as sess:
 
             _, c = sess.run([optimizer, cost], feed_dict= {x: batch_x, y: batch_y})
         
-        print "Epoch Value :", epoch,
+        print "Epoch Value :", epoch
 
         print "Training Error :",
-        
         prediction = tf.sigmoid(sess.run(pred, feed_dict= {x: teX}))
         predicted_class = tf.greater(prediction, 0.5)
         correct = tf.equal(predicted_class, teY)
         accuracy = tf.reduce_mean(tf.cast(correct, 'float'))
         print accuracy.eval()
 
-    tf.add_to_collection('pred', pred)
     saver = tf.train.Saver()
     print saver.save(sess, "tensor-flow-nn.ckpt")
         
