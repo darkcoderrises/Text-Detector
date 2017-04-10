@@ -183,7 +183,7 @@ string exec(const char* cmd) {
 
 bool predict(double *histogram) {
     ostringstream stream;
-    stream << "python run_nn.py";
+    stream << "python run_adaboost.py";
 
     for (int i=0; i<histValue; i++) {
         stream << " " << histogram[i];
@@ -263,7 +263,7 @@ void runOnImage(String name) {
         //result_x << endl;
 
         //boost.predict(out) == 1 checkGroundTruth(p1, p2) getIntersection(p1, p2)
-        cout << i << " " << suppressed.size() << endl;
+        cout << i << " " << suppressed.size() << endl << "\e[A";
         if (predict(hist)==1) { 
             rectangle(im1, p1, p2, CV_RGB(0,255,0),1);
             rectangle(imTemp, p1, p2, CV_RGB(0,255,0),1);
@@ -276,13 +276,14 @@ void runOnImage(String name) {
     }
 
     //cout << (float) precision / suppressed.size() << " " << precision << " " << suppressed.size() << endl;
-    imshow("imTemp", imTemp);
-    imshow("im1", im1);
+    //imshow("imTemp", imTemp);
+    //imshow("im1", im1);
     
-    //imwrite("images/res/"+name+".jpg", im1);
-    //imwrite("images/res/im_"+name+".jpg", imTemp);
+    imwrite("images/res/"+name+".jpg", im1);
+    imwrite("images/res/im_"+name+".jpg", imTemp);
     
-    //waitKey(0);
+    waitKey(0);
+    cout << "Done \n";
 }
 
 int main(int argc, char *argv[]) {

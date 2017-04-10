@@ -4,9 +4,11 @@ from multiprocessing import Pool
 from PIL import Image
 import numpy as np
 import os
+import cPickle as pickle
+import sys
 
-path1 = "images/i1/"
-path2 = "images/i2/"
+path1 = "images/CLASS1/"
+path2 = "images/CLASS2/"
 
 listing1 = os.listdir(path1)
 listing2 = os.listdir(path2)
@@ -19,7 +21,10 @@ def val_append(l, t):
     data_y.append(t)
 
 def process_correct_image(path):
-    print "correct", path
+    sys.stdout.flush()
+    print "correct", path,
+    print '\r',
+    
     im = Image.open(path1 + path)
     im = im.resize((24, 24), Image.ANTIALIAS)
     data = np.asarray(im, dtype=np.float32).flatten()
@@ -29,7 +34,10 @@ def process_correct_image(path):
     val_append(l, 1)
 
 def process_incorrect_image(path):
-    print "incorrect", path
+    sys.stdout.flush()
+    print "incorrect", path,
+    print '\r',
+
     im = Image.open(path2 + path)
     im = im.resize((24, 24), Image.ANTIALIAS)
     data = np.asarray(im, dtype=np.float32).flatten()
@@ -39,7 +47,7 @@ def process_incorrect_image(path):
     val_append(l, 0)
 
 map(process_correct_image, listing1)
-map(process_incorrect_image, listing2)
+print "Incorrect Images uploaded"
 
 inds = int(0.7*len(data_y))
 
@@ -53,8 +61,11 @@ train_y = data_y[:inds]
 test_x = data_x[inds:]
 test_y = data_y[inds:]
 
-bdt = AdaBoostClassifier(DecisionTreeClassifier(max_depth=3), algorithm="SAMME", n_estimators=200)
+bdt = AdaBoostClassifier(DecisionTreeClassifier(max_depth=5), algorithm="SAMME", 
+        n_estimators=2000)
+
 bdt.fit(train_x, train_y)
+print "Training complete"
 y = bdt.predict(test_x)
 
 y = np.array(y)
@@ -62,8 +73,10 @@ test_y = np.array(test_y)
 
 count = 0
 for i in range(len(y)):
-    print y[i], test_y[i]
     if y[i] == test_y[i]:
         count += 1
 
 print count/float(len(y))
+
+with open('adaboost_classifier.pkl', 'wb') as fid:
+    pickle.dump(bdt, fid)
