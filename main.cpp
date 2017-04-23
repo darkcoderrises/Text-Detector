@@ -3,6 +3,8 @@
 //
 
 #include "er.h"
+#include "run_adaboost.h"
+#include "text.h"
 #include <vector>
 #include <set>
 #include <stdlib.h>
@@ -47,11 +49,12 @@ int histValue=24*24, direction[][2] = {{-1,-1}, {-1,0}, {-1,1}, {0,1}, {1,1}, {1
 // ofstream result_x("Result/result_x", ofstream::out|ofstream::app), result_y("Result/result_y", ofstream::out|ofstream::app), 
 // boundary("Result/boundary", ofstream::out|ofstream::app);
 CvBoost boost;
+AdaboostPython adaBoost;
 
 int countIm = 0;
 String globalName;
 
-Mat gt_image_mat;
+Mat gt_image_mat, cropped_part;
 vector<Rect> chars;
 
 Rect dfs(int i, int j, bool** visited, int** image_bool, Rect &rect) {
@@ -142,29 +145,30 @@ bool checkGroundTruth(Point p1, Point p2) {
 
 double* calcHistogram(Point p1, Point p2, Mat image) {
     Mat im1 = image(Rect(max(p1.x,0), max(p1.y,0), p2.x-p1.x, p2.y-p1.y)), resized;
-    resize(im1, resized, cvSize(24,24));
+    resize(im1, resized, cvSize(26,26));
 
+    cropped_part = resized;
     countIm++;
-    char filename[128];
     double* histogram = new double[histValue];
-    double mean = 0, var = 0;
 
-    for (int i=0; i<24; i++) {
-        for (int j=0; j<24; j++) {
-            histogram[i*24+j] = (double) resized.at<uchar> (j, i);
-            mean += histogram[i*24+j]/histValue;
+    int number_of_items = 0;
+    for (int i=1; i<=24; i++) {
+        for (int j=1; j<=24; j++) {
+            double sum=0;
+            for (int direc=7; direc>=0; direc--) {
+                int x = i+direction[direc][1], y = j+direction[direc][0];
+                sum += (double) resized.at<uchar>(y,x);
+            }
+            sum /= 8;
+            unsigned int code = 0;
+            for (int direc=7; direc>=0; direc--) {
+                int x = i+direction[direc][1], y = j+direction[direc][0];
+                code = (code << 1) + (((double) resized.at<uchar>(y,x))>sum);
+            }
+
+            histogram[(j-1)*24+i-1] = code;
         }
     }
-
-    for (int i=0; i<24; i++)
-        for (int j=0; j<24; j++)
-            var += (histogram[i*24+j]-mean)*(histogram[i*24+j]-mean);
-
-    var = sqrt(var);
-
-    for (int i=0; i<24; i++) 
-        for (int j=0; j<24; j++) 
-            histogram[i*24+j] = (histogram[i*24+j] - mean)/var;
 
     return histogram;
 }
@@ -181,16 +185,17 @@ string exec(const char* cmd) {
     return result;
 }
 
-bool predict(double *histogram) {
+int predict(double *histogram) {
     ostringstream stream;
-    stream << "python run_adaboost.py";
+    stream << "python3.5 run_adaboost.py";
 
     for (int i=0; i<histValue; i++) {
         stream << " " << histogram[i];
     }
 
     string res = exec(stream.str().c_str());
-    return stoi(res, nullptr);
+    int val = stoi(res, nullptr);
+    return val;
 }
 
 void runOnImage(String name) {
@@ -241,6 +246,8 @@ void runOnImage(String name) {
 
     int precision = 0;
 
+    vector<TextRegion> strongText, weakText;
+
     cerr << elapsed_secs << " Printing suppressed\n";
     for (int i=0;i<suppressed.size();i++) {
         Point p1,p2;
@@ -262,12 +269,23 @@ void runOnImage(String name) {
         }
         //result_x << endl;
 
+        Mat tempIM = im1(Rect(max(p1.x,0), max(p1.y,0), p2.x-p1.x, p2.y-p1.y));
+        resize(tempIM, tempIM, cvSize(24,24));
+
         //boost.predict(out) == 1 checkGroundTruth(p1, p2) getIntersection(p1, p2)
-        cout << i << " " << suppressed.size() << endl << "\e[A";
-        if (predict(hist)==1) { 
-            rectangle(im1, p1, p2, CV_RGB(0,255,0),1);
-            rectangle(imTemp, p1, p2, CV_RGB(0,255,0),1);
+        int result_boost = adaBoost.predict(hist);
+        if (result_boost == 1) { 
+            //rectangle(im1, p1, p2, CV_RGB(0,255,0),2);
+            //rectangle(imTemp, p1, p2, CV_RGB(0,255,0),1);
             //result_y << 1 << endl;
+            
+            TextRegion text(tempIM, p1, p2);
+            strongText.push_back(text);
+        }
+        else if (result_boost == 2) {
+            //rectangle(im1, p1, p2, CV_RGB(0,0,255), 1);
+            TextRegion text(tempIM, p1, p2);
+            weakText.push_back(text);
         }
         else {
             rectangle(imTemp, p1, p2, CV_RGB(255,0,0),1);
@@ -275,19 +293,43 @@ void runOnImage(String name) {
         }
     }
 
+    int tries = 4;
+    while (tries--) {
+        vector<TextRegion> temp;
+        for (int i=0; i<weakText.size(); i++) {
+            TextRegion weak = weakText[i];
+            if (weak.compare(strongText)) {
+                strongText.push_back(weak);   
+            }
+            else {
+                temp.push_back(weak);
+            }
+        }
+        weakText = temp;
+
+        cout << "SIZE : " << strongText.size() << endl;
+    }
+
+    for (int i=0; i<strongText.size(); i++) {
+        TextRegion strong = strongText[i];
+        rectangle(im1, strong.p1, strong.p2, CV_RGB(0,255,0), 1);
+        rectangle(imTemp, strong.p1, strong.p2, CV_RGB(0,255,0), 2);
+    }
+
     //cout << (float) precision / suppressed.size() << " " << precision << " " << suppressed.size() << endl;
     //imshow("imTemp", imTemp);
     //imshow("im1", im1);
-    
+
     imwrite("images/res/"+name+".jpg", im1);
     imwrite("images/res/im_"+name+".jpg", imTemp);
-    
+
     waitKey(0);
     cout << "Done \n";
 }
 
 int main(int argc, char *argv[]) {
-    boost.load("./data1.xml");
+    //boost.load("./data_1000_20.xml");
+    adaBoost.load();
     runOnImage(argv[1]);
     //result_y.close();
     //result_x.close();

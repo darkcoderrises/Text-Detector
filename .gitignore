@@ -1,5 +1,8 @@
+.ipy*
+a.out
 boost
 train_2
+*.pyc
 *.swp
 *.o
 *.jpg
@@ -13,3 +16,6 @@ mser/
 Result/
 database/
 images/
+Chars74k/
+kaist/
+orig_dataset/

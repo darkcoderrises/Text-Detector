@@ -37,11 +37,12 @@ using namespace cv;
 // }
 
 
-int histValue=22*22, direction[][2] = {{-1,-1}, {-1,0}, {-1,1}, {0,1}, {1,1}, {1,0}, {1,-1}, {0,-1}}, **gt_arr;
+int countIm=0, histValue=22*22, direction[][2] = {{-1,-1}, {-1,0}, {-1,1}, {0,1}, {1,1}, {1,0}, {1,-1}, {0,-1}}, **gt_arr;
 ofstream train_x("train_x", ofstream::out|ofstream::app), train_y("train_y", ofstream::out|ofstream::app);
 
 Mat gt_image_mat;
 vector<Rect> chars;
+String globalName;
 
 Rect dfs(int i, int j, bool** visited, int** image_bool, Rect &rect) {
     stack<tuple<int, int>> s;
@@ -133,15 +134,16 @@ double* calcHistogram(Point p1, Point p2, Mat image) {
     Mat im1 = image(Rect(max(p1.x,0), max(p1.y,0), p2.x-p1.x, p2.y-p1.y)), resized;
     resize(im1, resized, cvSize(24,24));
         
+    countIm ++;
     char filename[128];
-    // if (getIntersection(p1, p2) > 0.7) {
-    //     sprintf(filename, "images/i1/%s_%04d.jpg", globalName.c_str(), countIm);
-    //  imwrite(filename, im1);
-    // }
-    // else if (getIntersection(p1, p2) <= 0) {
-    //     sprintf(filename, "images/i2/%s_%04d.jpg", globalName.c_str(), countIm);
-    //  imwrite(filename, im1);
-    // }
+    if (getIntersection(p1, p2) >= 0.5) {
+        sprintf(filename, "images/TCLASS1/%s_%04d.jpg", globalName.c_str(), countIm);
+        imwrite(filename, im1);
+    }
+    else if (getIntersection(p1, p2) < 0.5) {
+        sprintf(filename, "images/TCLASS2/%s_%04d.jpg", globalName.c_str(), countIm);
+        imwrite(filename, im1);
+    }
 
     double* histogram = new double[histValue];
     double mean = 0, var = 0;
@@ -172,6 +174,7 @@ double* calcHistogram(Point p1, Point p2, Mat image) {
 void runOnImage(String name) {
     string image_name = "database/img_"+ name +".jpg";
     string gt_name = "database/gt_img_"+ name +".png";
+    globalName = name;
 
     cerr << image_name << " " << gt_name << endl;
 

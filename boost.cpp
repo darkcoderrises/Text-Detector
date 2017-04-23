@@ -42,12 +42,12 @@ int main(int argc, char *argv[]) {
 	String train_file_x = "train_x", train_file_y = "train_y", result_file_x = "Result/result_x", result_file_y = "Result/result_y";
 	Mat train_x, train_y, result_x, result_y;
 
-	train_x = read_mat_from_file(train_file_x, line_count(train_file_x), 22*22);
+	train_x = read_mat_from_file(train_file_x, line_count(train_file_x), 24*24);
 	train_y = read_mat_from_file(train_file_y, line_count(train_file_y), 1);
-	result_x = read_mat_from_file(result_file_x, line_count(result_file_x), 22*22);
+	result_x = read_mat_from_file(result_file_x, line_count(result_file_x), 24*24);
 	result_y = read_mat_from_file(result_file_y, line_count(result_file_y), 1);
 
-	CvBoostParams param(CvBoost::REAL,20,0,100,false,0);
+	CvBoostParams param(CvBoost::GENTLE,1000,0.95,20,false,0);
 	CvBoost boost;
 	
 	if (train) {
@@ -58,9 +58,13 @@ int main(int argc, char *argv[]) {
 	boost.load("./data1.xml");
 	
 	int total = result_y.size[0], correct = 0;
+        int tp = 0, fp = 0;
 	for (int i=0; i<total; i++) {
 		float result = boost.predict(result_x.row(i));
 		correct += (result_y.at<float>(i,0) == result);
+                if (result == 1 && result_y.at<float>(i,0) == 1) tp ++;
+                else if (result == 1) fp++;
 	}
 	cout << ((float) correct) / ((float) total) << endl;
+        cout << ((float) tp) / ((float) fp + (float) tp) << endl;
 }

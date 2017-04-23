@@ -1,9 +1,9 @@
 C = g++
-CFLAGS = -std=c++11 -g 
+CFLAGS = -std=c++11 -g -I/usr/include/python3.5
 CFLAGS+=`pkg-config --cflags opencv`
-LDFLAGS+=`pkg-config --libs opencv`
+LDFLAGS+=`pkg-config --libs opencv` -L/usr/lib/python3.5/config-3.5m-x86_64-linux-gnu -lpython3.5
 PROG = main
-FILES = er.cpp region.cpp main.cpp
+FILES = er.cpp region.cpp main.cpp text.cpp
 
 SRCS = main.cpp
 
